@@ -1,0 +1,38 @@
+name: Update Profile Art
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-heatmap:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Generate Heatmap
+        env:
+          GH_PROFILE_USER: shabadgrover
+        run: |
+          python scripts/fetch_contributions.py
+          python scripts/render_heatmap_svg.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data/contributions.json contrib-heatmap.svg
+          git commit -m "Auto-update contribution heatmap" || echo "No changes to commit"
+          git push
